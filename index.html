@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebOS - Web-Based Operating System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        #webos-container {
+            width: 95vw;
+            height: 95vh;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 12px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Desktop Styles */
+        #desktop {
+            flex: 1;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%230d1b2a"/><path d="M0,0 L100,100 M100,0 L0,100" stroke="%23172a45" stroke-width="1"/></svg>');
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .desktop-icon {
+            width: 80px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: absolute;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .desktop-icon i {
+            font-size: 36px;
+            margin-bottom: 8px;
+            color: #64b5f6;
+        }
+
+        .desktop-icon span {
+            font-size: 12px;
+            text-align: center;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        /* Taskbar Styles */
+        #taskbar {
+            height: 40px;
+            background: rgba(30, 30, 30, 0.9);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #start-button {
+            height: 32px;
+            padding: 0 15px;
+            background: linear-gradient(to bottom, #4a9ae9, #2a6fc1);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        #start-button i {
+            margin-right: 5px;
+        }
+
+        #taskbar-apps {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .taskbar-app {
+            height: 32px;
+            padding: 0 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-right: 5px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .taskbar-app.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .taskbar-app i {
+            margin-right: 5px;
+        }
+
+        #system-tray {
+            display: flex;
+            align-items: center;
+        }
+
+        .tray-icon {
+            margin: 0 5px;
+            font-size: 14px;
+        }
+
+        #clock {
+            margin-left: 10px;
+            font-size: 13px;
+        }
+
+        /* Window Styles */
+        .window {
+            position: absolute;
+            background: rgba(45, 45, 45, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 400px;
+            min-height: 300px;
+        }
+
+        .window.active {
+            display: flex;
+            z-index: 100;
+        }
+
+        .window-header {
+            height: 30px;
+            background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            cursor: move;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .window-title {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+        }
+
+        .window-control {
+            width: 22px;
+            height: 22px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .window-control.minimize {
+            background: #ffb300;
+        }
+
+        .window-control.maximize {
+            background: #00c853;
+        }
+
+        .window-control.close {
+            background: #ff5252;
+        }
+
+        .window-content {
+            flex: 1;
+            padding: 10px;
+            overflow: auto;
+        }
+
+        /* Start Menu */
+        #start-menu {
+            position: absolute;
+            bottom: 40px;
+            left: 10px;
+            width: 350px;
+            height: 450px;
+            background: rgba(40, 40, 40, 0.95);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
+            display: none;
+            z-index: 1000;
+        }
+
+        #start-menu.active {
+            display: block;
+        }
+
+        #start-menu-header {
+            height: 120px;
+            background: linear-gradient(135deg, #1a73e8, #6c1ae8);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        #user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        #user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        #user-details h3 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        #user-details p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        #start-menu-apps {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .start-menu-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .start-menu-app:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .start-menu-app i {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: #64b5f6;
+        }
+
+        .start-menu-app span {
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* Application Specific Styles */
+        #text-editor .window-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #editor-toolbar {
+            display: flex;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .toolbar-btn {
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 3px;
+            color: white;
+            margin-right: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        #editor-area {
+            flex: 1;
+            background: #1e1e1e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 10px;
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            resize: none;
+            outline: none;
+        }
+
+        #terminal .window-content {
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+
+        #terminal-input {
+            display: flex;
+            align-items: center;
+        }
+
+        #terminal-prompt {
+            margin-right: 5px;
+        }
+
+        #terminal-command {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            outline: none;
+            font-family: 'Courier New', monospace;
+        }
+
+        #file-manager .window-content {
+            display: flex;
+        }
+
+        #sidebar {
+            width: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            padding: 10px;
+            margin-right: 10px;
+        }
+
+        #file-explorer {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .file-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-item i {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .file-item span {
+            font-size: 12px;
+            text-align: center;
+        }
+
+        #paint-app .window-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #paint-tools {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        .paint-tool {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        #paint-canvas-container {
+            flex: 1;
+            background: white;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #paint-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        #code-editor .window-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #code-toolbar {
+            display: flex;
+            margin-bottom: 10px;
+        }
+
+        #code-area {
+            flex: 1;
+            background: #1e1e1e;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #game-container .window-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a2a;
+        }
+
+        #game-canvas {
+            background: #000;
+            border: 2px solid #4a4a9a;
+            border-radius: 5px;
+        }
+
+        #game-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        #video-player .window-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #video-container {
+            flex: 1;
+            background: black;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        #video-player-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        #video-progress {
+            flex: 1;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            margin: 0 10px;
+            position: relative;
+        }
+
+        #video-progress-bar {
+            position: absolute;
+            height: 100%;
+            background: #1a73e8;
+            border-radius: 3px;
+            width: 30%;
+        }
+
+        /* Notification */
+        #notification {
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            background: rgba(30, 30, 30, 0.9);
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 2000;
+        }
+
+        #notification.active {
+            display: block;
+            animation: fadeIn 0.3s, fadeOut 0.3s 2.7s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
+        }
+
+        /* Context Menu */
+        #context-menu {
+            position: absolute;
+            background: rgba(40, 40, 40, 0.95);
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 2000;
+        }
+
+        #context-menu.active {
+            display: block;
+        }
+
+        .context-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .context-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .context-item i {
+            margin-right: 10px;
+            width: 16px;
+            text-align: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            #webos-container {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="webos-container">
+        <!-- Desktop with Icons -->
+        <div id="desktop">
+            <div class="desktop-icon" style="top: 20px; left: 20px;" data-app="text-editor">
+                <i class="fas fa-file-alt"></i>
+                <span>Text Editor</span>
+            </div>
+            <div class="desktop-icon" style="top: 20px; left: 120px;" data-app="file-manager">
+                <i class="fas fa-folder"></i>
+                <span>File Manager</span>
+            </div>
+            <div class="desktop-icon" style="top: 120px; left: 20px;" data-app="terminal">
+                <i class="fas fa-terminal"></i>
+                <span>Terminal</span>
+            </div>
+            <div class="desktop-icon" style="top: 120px; left: 120px;" data-app="code-editor">
+                <i class="fas fa-code"></i>
+                <span>Code Editor</span>
+            </div>
+            <div class="desktop-icon" style="top: 220px; left: 20px;" data-app="paint-app">
+                <i class="fas fa-paint-brush"></i>
+                <span>Paint</span>
+            </div>
+            <div class="desktop-icon" style="top: 220px; left: 120px;" data-app="video-player">
+                <i class="fas fa-play-circle"></i>
+                <span>Media Player</span>
+            </div>
+            <div class="desktop-icon" style="top: 320px; left: 20px;" data-app="game-container">
+                <i class="fas fa-gamepad"></i>
+                <span>Space Invaders</span>
+            </div>
+            <div class="desktop-icon" style="top: 320px; left: 120px;" data-app="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+        </div>
+
+        <!-- Taskbar -->
+        <div id="taskbar">
+            <button id="start-button">
+                <i class="fab fa-windows"></i> Start
+            </button>
+            <div id="taskbar-apps">
+                <!-- Taskbar apps will be added dynamically -->
+            </div>
+            <div id="system-tray">
+                <div class="tray-icon"><i class="fas fa-volume-up"></i></div>
+                <div class="tray-icon"><i class="fas fa-wifi"></i></div>
+                <div class="tray-icon"><i class="fas fa-battery-half"></i></div>
+                <div id="clock">12:00 PM</div>
+            </div>
+        </div>
+
+        <!-- Start Menu -->
+        <div id="start-menu">
+            <div id="start-menu-header">
+                <div id="user-info">
+                    <div id="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div id="user-details">
+                        <h3>WebOS User</h3>
+                        <p>Administrator</p>
+                    </div>
+                </div>
+            </div>
+            <div id="start-menu-apps">
+                <div class="start-menu-app" data-app="text-editor">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Text Editor</span>
+                </div>
+                <div class="start-menu-app" data-app="file-manager">
+                    <i class="fas fa-folder"></i>
+                    <span>File Manager</span>
+                </div>
+                <div class="start-menu-app" data-app="terminal">
+                    <i class="fas fa-terminal"></i>
+                    <span>Terminal</span>
+                </div>
+                <div class="start-menu-app" data-app="code-editor">
+                    <i class="fas fa-code"></i>
+                    <span>Code Editor</span>
+                </div>
+                <div class="start-menu-app" data-app="paint-app">
+                    <i class="fas fa-paint-brush"></i>
+                    <span>Paint</span>
+                </div>
+                <div class="start-menu-app" data-app="video-player">
+                    <i class="fas fa-play-circle"></i>
+                    <span>Media Player</span>
+                </div>
+                <div class="start-menu-app" data-app="game-container">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Space Invaders</span>
+                </div>
+                <div class="start-menu-app" data-app="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </div>
+                <div class="start-menu-app" data-app="calculator">
+                    <i class="fas fa-calculator"></i>
+                    <span>Calculator</span>
+                </div>
+                <div class="start-menu-app" data-app="browser">
+                    <i class="fas fa-globe"></i>
+                    <span>Web Browser</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Application Windows -->
+        <div id="text-editor" class="window" style="width: 600px; height: 500px; top: 50px; left: 100px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-file-alt"></i> Text Editor
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div id="editor-toolbar">
+                    <button class="toolbar-btn"><i class="fas fa-file"></i> New</button>
+                    <button class="toolbar-btn"><i class="fas fa-folder-open"></i> Open</button>
+                    <button class="toolbar-btn"><i class="fas fa-save"></i> Save</button>
+                    <button class="toolbar-btn"><i class="fas fa-print"></i> Print</button>
+                    <button class="toolbar-btn"><i class="fas fa-search"></i> Find</button>
+                </div>
+                <textarea id="editor-area" placeholder="Start typing your text here...">Welcome to WebOS Text Editor!
+
+This is a fully functional text editor with basic formatting options.
+
+Features:
+- Create and edit text documents
+- Save and open files
+- Print documents
+- Find and replace text
+
+Try it out by typing your own content!</textarea>
+            </div>
+        </div>
+
+        <div id="terminal" class="window" style="width: 700px; height: 400px; top: 80px; left: 200px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-terminal"></i> Terminal
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div id="terminal-output">
+                    <div>WebOS Terminal v1.0</div>
+                    <div>Type 'help' for available commands</div>
+                    <div>></div>
+                </div>
+                <div id="terminal-input">
+                    <span id="terminal-prompt">></span>
+                    <input type="text" id="terminal-command" autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <div id="file-manager" class="window" style="width: 800px; height: 500px; top: 60px; left: 150px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-folder"></i> File Manager
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div id="sidebar">
+                    <h3>Quick Access</h3>
+                    <div class="context-item"><i class="fas fa-desktop"></i> Desktop</div>
+                    <div class="context-item"><i class="fas fa-download"></i> Downloads</div>
+                    <div class="context-item"><i class="fas fa-file"></i> Documents</div>
+                    <div class="context-item"><i class="fas fa-music"></i> Music</div>
+                    <div class="context-item"><i class="fas fa-image"></i> Pictures</div>
+                    <div class="context-item"><i class="fas fa-film"></i> Videos</div>
+                </div>
+                <div id="file-explorer">
+                    <div class="file-item">
+                        <i class="fas fa-file"></i>
+                        <span>Document.txt</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-file-pdf"></i>
+                        <span>Report.pdf</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-file-image"></i>
+                        <span>Photo.jpg</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-file-video"></i>
+                        <span>Video.mp4</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-file-audio"></i>
+                        <span>Song.mp3</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-folder"></i>
+                        <span>Projects</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-folder"></i>
+                        <span>Work</span>
+                    </div>
+                    <div class="file-item">
+                        <i class="fas fa-folder"></i>
+                        <span>Personal</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="paint-app" class="window" style="width: 650px; height: 500px; top: 70px; left: 250px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-paint-brush"></i> Paint
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div id="paint-tools">
+                    <div class="paint-tool" title="Pencil"><i class="fas fa-pencil-alt"></i></div>
+                    <div class="paint-tool" title="Brush"><i class="fas fa-paint-brush"></i></div>
+                    <div class="paint-tool" title="Eraser"><i class="fas fa-eraser"></i></div>
+                    <div class="paint-tool" title="Fill"><i class="fas fa-fill-drip"></i></div>
+                    <div class="paint-tool" title="Text"><i class="fas fa-font"></i></div>
+                    <div class="paint-tool" title="Line"><i class="fas fa-minus"></i></div>
+                    <div class="paint-tool" title="Rectangle"><i class="fas fa-square"></i></div>
+                    <div class="paint-tool" title="Circle"><i class="fas fa-circle"></i></div>
+                </div>
+                <div id="paint-canvas-container">
+                    <canvas id="paint-canvas" width="600" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="code-editor" class="window" style="width: 700px; height: 500px; top: 50px; left: 100px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-code"></i> Code Editor
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div id="code-toolbar">
+                    <button class="toolbar-btn"><i class="fas fa-play"></i> Run</button>
+                    <button class="toolbar-btn"><i class="fas fa-bug"></i> Debug</button>
+                    <button class="toolbar-btn"><i class="fas fa-file-code"></i> New File</button>
+                    <select class="toolbar-btn">
+                        <option>HTML</option>
+                        <option>CSS</option>
+                        <option>JavaScript</option>
+                        <option>Python</option>
+                    </select>
+                </div>
+                <div id="code-area">
+                    <textarea id="code-editor-text" style="width: 100%; height: 100%; background: #1e1e1e; color: #d4d4d4; border: none; padding: 10px; font-family: 'Courier New', monospace; resize: none;" spellcheck="false">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;My Web Page&lt;/title&gt;
+    &lt;style&gt;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        h1 {
+            color: #3366cc;
+        }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Hello, WebOS!&lt;/h1&gt;
+    &lt;p&gt;This is a sample HTML page.&lt;/p&gt;
+    
+    &lt;script&gt;
+        console.log('WebOS Code Editor is working!');
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="video-player" class="window" style="width: 600px; height: 450px; top: 80px; left: 200px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-play-circle"></i> Media Player
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div id="video-container">
+                    <i class="fas fa-play-circle" style="font-size: 64px; color: #666;"></i>
+                </div>
+                <div id="video-player-controls">
+                    <button class="toolbar-btn"><i class="fas fa-backward"></i></button>
+                    <button class="toolbar-btn"><i class="fas fa-play"></i></button>
+                    <button class="toolbar-btn"><i class="fas fa-forward"></i></button>
+                    <div id="video-progress">
+                        <div id="video-progress-bar"></div>
+                    </div>
+                    <button class="toolbar-btn"><i class="fas fa-volume-up"></i></button>
+                    <button class="toolbar-btn"><i class="fas fa-expand"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-container" class="window" style="width: 600px; height: 500px; top: 60px; left: 150px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-gamepad"></i> Space Invaders
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <canvas id="game-canvas" width="550" height="400"></canvas>
+                <div id="game-controls">
+                    <button class="toolbar-btn" id="start-game">Start Game</button>
+                    <button class="toolbar-btn" id="pause-game">Pause</button>
+                    <div style="color: white; margin-left: 20px;">Score: <span id="game-score">0</span></div>
+                    <div style="color: white; margin-left: 20px;">Lives: <span id="game-lives">3</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="window" style="width: 500px; height: 400px; top: 100px; left: 200px;">
+            <div class="window-header">
+                <div class="window-title">
+                    <i class="fas fa-cog"></i> Settings
+                </div>
+                <div class="window-controls">
+                    <div class="window-control minimize"><i class="fas fa-minus"></i></div>
+                    <div class="window-control maximize"><i class="fas fa-square"></i></div>
+                    <div class="window-control close"><i class="fas fa-times"></i></div>
+                </div>
+            </div>
+            <div class="window-content">
+                <h3>System Settings</h3>
+                <div style="margin: 15px 0;">
+                    <label>Theme:</label>
+                    <select class="toolbar-btn" style="margin-left: 10px;">
+                        <option>Dark</option>
+                        <option>Light</option>
+                        <option>Blue</option>
+                        <option>Green</option>
+                    </select>
+                </div>
+                <div style="margin: 15px 0;">
+                    <label>Wallpaper:</label>
+                    <select class="toolbar-btn" style="margin-left: 10px;">
+                        <option>Default</option>
+                        <option>Nature</option>
+                        <option>Abstract</option>
+                        <option>Space</option>
+                    </select>
+                </div>
+                <div style="margin: 15px 0;">
+                    <label>Sound:</label>
+                    <input type="range" min="0" max="100" value="80" style="margin-left: 10px; width: 200px;">
+                </div>
+                <div style="margin: 15px 0;">
+                    <button class="toolbar-btn"><i class="fas fa-save"></i> Save Settings</button>
+                    <button class="toolbar-btn"><i class="fas fa-undo"></i> Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification -->
+        <div id="notification">
+            <div id="notification-message">Welcome to WebOS!</div>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="context-menu">
+            <div class="context-item"><i class="fas fa-plus"></i> New</div>
+            <div class="context-item"><i class="fas fa-folder-open"></i> Open</div>
+            <div class="context-item"><i class="fas fa-cut"></i> Cut</div>
+            <div class="context-item"><i class="fas fa-copy"></i> Copy</div>
+            <div class="context-item"><i class="fas fa-paste"></i> Paste</div>
+            <div class="context-item"><i class="fas fa-trash"></i> Delete</div>
+            <div class="context-item"><i class="fas fa-cog"></i> Properties</div>
+        </div>
+    </div>
+
+    <script>
+        // WebOS Operating System
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const desktop = document.getElementById('desktop');
+            const taskbarApps = document.getElementById('taskbar-apps');
+            const startButton = document.getElementById('start-button');
+            const startMenu = document.getElementById('start-menu');
+            const windows = document.querySelectorAll('.window');
+            const desktopIcons = document.querySelectorAll('.desktop-icon');
+            const startMenuApps = document.querySelectorAll('.start-menu-app');
+            const notification = document.getElementById('notification');
+            const contextMenu = document.getElementById('context-menu');
+            const clock = document.getElementById('clock');
+            
+            // State variables
+            let activeWindow = null;
+            let zIndex = 100;
+            let openApps = [];
+            
+            // Initialize clock
+            function updateClock() {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                clock.textContent = timeString;
+            }
+            
+            setInterval(updateClock, 1000);
+            updateClock();
+            
+            // Show notification
+            function showNotification(message) {
+                const notificationMessage = document.getElementById('notification-message');
+                notificationMessage.textContent = message;
+                notification.classList.add('active');
+                
+                setTimeout(() => {
+                    notification.classList.remove('active');
+                }, 3000);
+            }
+            
+            // Open application
+            function openApp(appId) {
+                const appWindow = document.getElementById(appId);
+                
+                if (appWindow) {
+                    // Close start menu if open
+                    startMenu.classList.remove('active');
+                    
+                    // Show the window
+                    appWindow.style.display = 'flex';
+                    appWindow.classList.add('active');
+                    zIndex++;
+                    appWindow.style.zIndex = zIndex;
+                    activeWindow = appWindow;
+                    
+                    // Add to taskbar if not already there
+                    if (!openApps.includes(appId)) {
+                        openApps.push(appId);
+                        
+                        const taskbarApp = document.createElement('div');
+                        taskbarApp.className = 'taskbar-app';
+                        taskbarApp.setAttribute('data-app', appId);
+                        
+                        const appTitle = appWindow.querySelector('.window-title').textContent;
+                        taskbarApp.innerHTML = `<i class="fas fa-${getAppIcon(appId)}"></i> ${appTitle}`;
+                        
+                        taskbarApp.addEventListener('click', function() {
+                            focusApp(appId);
+                        });
+                        
+                        taskbarApps.appendChild(taskbarApp);
+                    }
+                    
+                    // Initialize app-specific functionality
+                    initializeApp(appId);
+                }
+            }
+            
+            // Close application
+            function closeApp(appId) {
+                const appWindow = document.getElementById(appId);
+                
+                if (appWindow) {
+                    appWindow.style.display = 'none';
+                    appWindow.classList.remove('active');
+                    
+                    // Remove from taskbar
+                    const index = openApps.indexOf(appId);
+                    if (index > -1) {
+                        openApps.splice(index, 1);
+                    }
+                    
+                    const taskbarApp = document.querySelector(`.taskbar-app[data-app="${appId}"]`);
+                    if (taskbarApp) {
+                        taskbarApp.remove();
+                    }
+                    
+                    if (activeWindow === appWindow) {
+                        activeWindow = null;
+                    }
+                }
+            }
+            
+            // Focus application
+            function focusApp(appId) {
+                const appWindow = document.getElementById(appId);
+                
+                if (appWindow) {
+                    zIndex++;
+                    appWindow.style.zIndex = zIndex;
+                    activeWindow = appWindow;
+                    
+                    // Update taskbar
+                    document.querySelectorAll('.taskbar-app').forEach(app => {
+                        app.classList.remove('active');
+                    });
+                    
+                    const taskbarApp = document.querySelector(`.taskbar-app[data-app="${appId}"]`);
+                    if (taskbarApp) {
+                        taskbarApp.classList.add('active');
+                    }
+                }
+            }
+            
+            // Get app icon
+            function getAppIcon(appId) {
+                const icons = {
+                    'text-editor': 'file-alt',
+                    'file-manager': 'folder',
+                    'terminal': 'terminal',
+                    'code-editor': 'code',
+                    'paint-app': 'paint-brush',
+                    'video-player': 'play-circle',
+                    'game-container': 'gamepad',
+                    'settings': 'cog'
+                };
+                
+                return icons[appId] || 'window-maximize';
+            }
+            
+            // Initialize app-specific functionality
+            function initializeApp(appId) {
+                switch(appId) {
+                    case 'terminal':
+                        initializeTerminal();
+                        break;
+                    case 'paint-app':
+                        initializePaint();
+                        break;
+                    case 'game-container':
+                        initializeGame();
+                        break;
+                }
+            }
+            
+            // Terminal functionality
+            function initializeTerminal() {
+                const terminalOutput = document.getElementById('terminal-output');
+                const terminalCommand = document.getElementById('terminal-command');
+                
+                terminalCommand.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        const command = terminalCommand.value.trim();
+                        
+                        if (command) {
+                            // Add command to output
+                            const commandElement = document.createElement('div');
+                            commandElement.textContent = `> ${command}`;
+                            terminalOutput.appendChild(commandElement);
+                            
+                            // Process command
+                            processCommand(command);
+                            
+                            // Clear input
+                            terminalCommand.value = '';
+                            
+                            // Scroll to bottom
+                            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+                        }
+                    }
+                });
+                
+                function processCommand(command) {
+                    const outputElement = document.createElement('div');
+                    
+                    switch(command.toLowerCase()) {
+                        case 'help':
+                            outputElement.innerHTML = `
+                                Available commands:<br>
+                                - help: Show this help<br>
+                                - date: Show current date and time<br>
+                                - clear: Clear terminal<br>
+                                - echo [text]: Echo text<br>
+                                - calculator: Open calculator<br>
+                                - weather: Show weather info<br>
+                                - system: System information
+                            `;
+                            break;
+                        case 'date':
+                            outputElement.textContent = new Date().toString();
+                            break;
+                        case 'clear':
+                            terminalOutput.innerHTML = '<div>WebOS Terminal v1.0</div><div>Type \'help\' for available commands</div>';
+                            return;
+                        case 'calculator':
+                            outputElement.textContent = 'Opening calculator...';
+                            showNotification('Calculator opened');
+                            break;
+                        case 'weather':
+                            outputElement.textContent = 'Weather: Sunny, 72°F';
+                            break;
+                        case 'system':
+                            outputElement.innerHTML = `
+                                WebOS v1.0<br>
+                                Memory: 8GB<br>
+                                Storage: 256GB<br>
+                                Processor: WebOS Virtual CPU<br>
+                                Uptime: ${Math.floor(performance.now() / 1000)} seconds
+                            `;
+                            break;
+                        default:
+                            if (command.startsWith('echo ')) {
+                                outputElement.textContent = command.substring(5);
+                            } else {
+                                outputElement.textContent = `Command not found: ${command}`;
+                            }
+                    }
+                    
+                    terminalOutput.appendChild(outputElement);
+                }
+            }
+            
+            // Paint functionality
+            function initializePaint() {
+                const canvas = document.getElementById('paint-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set white background
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+                let currentTool = 'pencil';
+                let currentColor = '#000000';
+                let brushSize = 5;
+                
+                // Drawing functions
+                function startDrawing(e) {
+                    isDrawing = true;
+                    [lastX, lastY] = getMousePos(canvas, e);
+                }
+                
+                function draw(e) {
+                    if (!isDrawing) return;
+                    
+                    const [x, y] = getMousePos(canvas, e);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(x, y);
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = brushSize;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                    
+                    [lastX, lastY] = [x, y];
+                }
+                
+                function stopDrawing() {
+                    isDrawing = false;
+                }
+                
+                function getMousePos(canvas, e) {
+                    const rect = canvas.getBoundingClientRect();
+                    return [
+                        e.clientX - rect.left,
+                        e.clientY - rect.top
+                    ];
+                }
+                
+                // Event listeners
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseout', stopDrawing);
+                
+                // Tool selection
+                document.querySelectorAll('.paint-tool').forEach(tool => {
+                    tool.addEventListener('click', function() {
+                        document.querySelectorAll('.paint-tool').forEach(t => {
+                            t.style.background = 'rgba(255, 255, 255, 0.1)';
+                        });
+                        this.style.background = 'rgba(255, 255, 255, 0.3)';
+                        currentTool = this.title.toLowerCase();
+                    });
+                });
+                
+                // Set pencil as default
+                document.querySelector('.paint-tool[title="Pencil"]').style.background = 'rgba(255, 255, 255, 0.3)';
+            }
+            
+            // Game functionality
+            function initializeGame() {
+                const canvas = document.getElementById('game-canvas');
+                const ctx = canvas.getContext('2d');
+                const scoreElement = document.getElementById('game-score');
+                const livesElement = document.getElementById('game-lives');
+                const startButton = document.getElementById('start-game');
+                const pauseButton = document.getElementById('pause-game');
+                
+                // Game variables
+                let score = 0;
+                let lives = 3;
+                let gameRunning = false;
+                let gamePaused = false;
+                let player, invaders, bullets;
+                
+                // Player object
+                function Player() {
+                    this.width = 50;
+                    this.height = 20;
+                    this.x = canvas.width / 2 - this.width / 2;
+                    this.y = canvas.height - this.height - 10;
+                    this.speed = 7;
+                    this.color = '#0f0';
+                    
+                    this.draw = function() {
+                        ctx.fillStyle = this.color;
+                        ctx.fillRect(this.x, this.y, this.width, this.height);
+                    };
+                    
+                    this.move = function(direction) {
+                        if (direction === 'left' && this.x > 0) {
+                            this.x -= this.speed;
+                        }
+                        if (direction === 'right' && this.x < canvas.width - this.width) {
+                            this.x += this.speed;
+                        }
+                    };
+                    
+                    this.shoot = function() {
+                        bullets.push({
+                            x: this.x + this.width / 2 - 2,
+                            y: this.y,
+                            width: 4,
+                            height: 10,
+                            speed: 7,
+                            color: '#0ff'
+                        });
+                    };
+                }
+                
+                // Initialize game
+                function initGame() {
+                    player = new Player();
+                    invaders = [];
+                    bullets = [];
+                    
+                    // Create invaders
+                    for (let row = 0; row < 4; row++) {
+                        for (let col = 0; col < 8; col++) {
+                            invaders.push({
+                                x: 50 + col * 60,
+                                y: 50 + row * 40,
+                                width: 40,
+                                height: 30,
+                                color: '#f00',
+                                alive: true
+                            });
+                        }
+                    }
+                    
+                    score = 0;
+                    lives = 3;
+                    updateUI();
+                }
+                
+                // Update UI
+                function updateUI() {
+                    scoreElement.textContent = score;
+                    livesElement.textContent = lives;
+                }
+                
+                // Draw game
+                function draw() {
+                    // Clear canvas
+                    ctx.fillStyle = '#000';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw player
+                    player.draw();
+                    
+                    // Draw invaders
+                    invaders.forEach(invader => {
+                        if (invader.alive) {
+                            ctx.fillStyle = invader.color;
+                            ctx.fillRect(invader.x, invader.y, invader.width, invader.height);
+                        }
+                    });
+                    
+                    // Draw bullets
+                    bullets.forEach(bullet => {
+                        ctx.fillStyle = bullet.color;
+                        ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                    });
+                }
+                
+                // Update game state
+                function update() {
+                    // Move bullets
+                    bullets.forEach((bullet, index) => {
+                        bullet.y -= bullet.speed;
+                        
+                        // Remove bullets that are off screen
+                        if (bullet.y < 0) {
+                            bullets.splice(index, 1);
+                        }
+                        
+                        // Check for collisions with invaders
+                        invaders.forEach((invader, invaderIndex) => {
+                            if (invader.alive && 
+                                bullet.x < invader.x + invader.width &&
+                                bullet.x + bullet.width > invader.x &&
+                                bullet.y < invader.y + invader.height &&
+                                bullet.y + bullet.height > invader.y) {
+                                
+                                // Collision detected
+                                invader.alive = false;
+                                bullets.splice(index, 1);
+                                score += 10;
+                                updateUI();
+                            }
+                        });
+                    });
+                    
+                    // Check if all invaders are destroyed
+                    const aliveInvaders = invaders.filter(invader => invader.alive);
+                    if (aliveInvaders.length === 0) {
+                        // Level complete
+                        showNotification('Level Complete! Starting next level...');
+                        initGame();
+                    }
+                }
+                
+                // Game loop
+                function gameLoop() {
+                    if (!gameRunning || gamePaused) return;
+                    
+                    update();
+                    draw();
+                    requestAnimationFrame(gameLoop);
+                }
+                
+                // Event listeners for game controls
+                document.addEventListener('keydown', function(e) {
+                    if (!gameRunning || gamePaused) return;
+                    
+                    if (e.key === 'ArrowLeft') {
+                        player.move('left');
+                    } else if (e.key === 'ArrowRight') {
+                        player.move('right');
+                    } else if (e.key === ' ') {
+                        player.shoot();
+                    }
+                });
+                
+                startButton.addEventListener('click', function() {
+                    if (!gameRunning) {
+                        gameRunning = true;
+                        gamePaused = false;
+                        initGame();
+                        gameLoop();
+                        showNotification('Game started! Use arrow keys to move and spacebar to shoot.');
+                    }
+                });
+                
+                pauseButton.addEventListener('click', function() {
+                    gamePaused = !gamePaused;
+                    if (!gamePaused && gameRunning) {
+                        gameLoop();
+                    }
+                });
+                
+                // Draw initial state
+                initGame();
+                draw();
+            }
+            
+            // Event listeners for desktop icons
+            desktopIcons.forEach(icon => {
+                icon.addEventListener('click', function() {
+                    const appId = this.getAttribute('data-app');
+                    openApp(appId);
+                });
+                
+                // Right-click context menu
+                icon.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    contextMenu.style.display = 'block';
+                    contextMenu.style.left = e.pageX + 'px';
+                    contextMenu.style.top = e.pageY + 'px';
+                    contextMenu.classList.add('active');
+                });
+            });
+            
+            // Event listeners for start menu apps
+            startMenuApps.forEach(app => {
+                app.addEventListener('click', function() {
+                    const appId = this.getAttribute('data-app');
+                    openApp(appId);
+                });
+            });
+            
+            // Start button event listener
+            startButton.addEventListener('click', function() {
+                startMenu.classList.toggle('active');
+            });
+            
+            // Close start menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!startButton.contains(e.target) && !startMenu.contains(e.target)) {
+                    startMenu.classList.remove('active');
+                }
+                
+                // Close context menu
+                if (!e.target.closest('.desktop-icon') && !contextMenu.contains(e.target)) {
+                    contextMenu.classList.remove('active');
+                }
+            });
+            
+            // Window controls
+            windows.forEach(window => {
+                const header = window.querySelector('.window-header');
+                const minimizeBtn = window.querySelector('.minimize');
+                const maximizeBtn = window.querySelector('.maximize');
+                const closeBtn = window.querySelector('.close');
+                const appId = window.id;
+                
+                // Close button
+                closeBtn.addEventListener('click', function() {
+                    closeApp(appId);
+                });
+                
+                // Minimize button
+                minimizeBtn.addEventListener('click', function() {
+                    window.style.display = 'none';
+                    
+                    // Update taskbar
+                    const taskbarApp = document.querySelector(`.taskbar-app[data-app="${appId}"]`);
+                    if (taskbarApp) {
+                        taskbarApp.classList.remove('active');
+                    }
+                });
+                
+                // Maximize button
+                maximizeBtn.addEventListener('click', function() {
+                    if (window.style.width === '95vw' && window.style.height === '90vh') {
+                        // Restore
+                        window.style.width = '';
+                        window.style.height = '';
+                        window.style.top = '';
+                        window.style.left = '';
+                    } else {
+                        // Maximize
+                        window.style.width = '95vw';
+                        window.style.height = '90vh';
+                        window.style.top = '0';
+                        window.style.left = '0';
+                    }
+                });
+                
+                // Make window draggable
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                header.addEventListener('mousedown', dragMouseDown);
+                
+                function dragMouseDown(e) {
+                    e.preventDefault();
+                    // Get the mouse cursor position at startup
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    document.addEventListener('mouseup', closeDragElement);
+                    document.addEventListener('mousemove', elementDrag);
+                    
+                    // Focus the window
+                    focusApp(appId);
+                }
+                
+                function elementDrag(e) {
+                    e.preventDefault();
+                    // Calculate the new cursor position
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    // Set the element's new position
+                    window.style.top = (window.offsetTop - pos2) + "px";
+                    window.style.left = (window.offsetLeft - pos1) + "px";
+                }
+                
+                function closeDragElement() {
+                    // Stop moving when mouse button is released
+                    document.removeEventListener('mouseup', closeDragElement);
+                    document.removeEventListener('mousemove', elementDrag);
+                }
+                
+                // Focus window when clicked
+                window.addEventListener('mousedown', function() {
+                    focusApp(appId);
+                });
+            });
+            
+            // Show welcome notification
+            setTimeout(() => {
+                showNotification('Welcome to WebOS! Click on any icon to open an application.');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
